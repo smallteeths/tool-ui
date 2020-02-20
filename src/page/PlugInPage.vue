@@ -405,7 +405,7 @@ export default {
 
       let loc = window.location
 
-      this.ws = new WebSocket(`ws://${loc.host}/ws/upload/test`)
+      this.ws = new WebSocket(`ws://${loc.host}/upload/test`)
       this.buildDisabled = true
       // 连接打开时触发
       this.ws.onopen = () => {  
@@ -510,7 +510,7 @@ export default {
         this.wsInstall = "";
 
         let loc = window.location
-        this.wsInstall = new WebSocket(`ws://${loc.host}/ws/upload/NpmInstall`)
+        this.wsInstall = new WebSocket(`ws://${loc.host}/upload/NpmInstall`)
         this.wsInstall.onopen = () => {  
           if (this.rancherUiState === "企业版ui静态文件已上传") {
             this.wsInstall.send("installfile");
@@ -534,7 +534,7 @@ export default {
         }
         let loc = window.location
 
-        this.wsInstall = new WebSocket(`ws://${loc.host}/ws/upload/NpmInstall`)
+        this.wsInstall = new WebSocket(`ws://${loc.host}/upload/NpmInstall`)
         // 连接打开时触发
         this.wsInstall.onopen = () => {
           if (val === "企业版ui静态文件已上传") {
