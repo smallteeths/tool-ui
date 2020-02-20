@@ -23,7 +23,7 @@
         <el-col :span="20">
           <div class="rancher-upload-content grid-content bg-purple">
             <el-upload
-            action="/api/upload/logo"
+            action="/upload/logo"
             list-type="picture-card"
             :show-file-list="showFileList"
             :on-success="handleSuccess"
@@ -43,7 +43,7 @@
         <el-col :span="20">
           <div class="rancher-upload-content grid-content bg-purple">
             <el-upload
-            action="/api/upload/loginBackground"
+            action="/upload/loginBackground"
             list-type="picture-card"
             :show-file-list="showFileList"
             :on-success="handleLoginBackGroundSuccess"
@@ -325,7 +325,7 @@ export default {
     let loc = window.location
 
     this.host = loc.host;
-    Http.post('/api/upload/variableLastConfig').then((response) => {
+    Http.post('/upload/variableLastConfig').then((response) => {
       if (response.data) {
         this.dynamicValidateForm.domains = JSON.parse(response.data.link_data)
         this.fileName = response.data.file_name
@@ -355,7 +355,7 @@ export default {
       }
     })
     this.timer = setInterval(() => {
-      Http.get('/api/upload/isRancheruiExist').then((response) => {
+      Http.get('/upload/isRancheruiExist').then((response) => {
         if (response.data.message === 'empty') {
           this.rancherUiState = 'rancher-ui文件未上传'
         } else if ( response.data.message === 'rancherui') {
@@ -462,7 +462,7 @@ export default {
         }
       }
 
-      Http.post('/api/upload/save', {
+      Http.post('/upload/save', {
         file_name: this.fileName,
         loginbg_file_name: this.loginBackGroundFileName,
         link_data: list.length > 0 && list[0].name && list[0].value ? JSON.stringify(list) : '',
@@ -485,7 +485,6 @@ export default {
 
     download() {
       if (this.rancherUiState === "企业版ui静态文件已上传") {
-        window.open(this.GLOBAL.pandariaStaticURL);
         window.open(`http://${this.host}/upload/public/rancherui/pandaria-ui/dist/static/2.3-dev.tar.gz`);
       } else {
         window.open(`http://${this.host}/upload/public/rancherui/ui/dist/static/master-dev.tar.gz`);
@@ -494,7 +493,7 @@ export default {
     },
 
     handleDelete() {
-      Http.get('/api/upload/DeleteDir').then((response) => {
+      Http.get('/upload/DeleteDir').then((response) => {
         if (response.code === 0 && response.message === "OK") {
           this.$message({
             message: '清空文件成功',
