@@ -2,8 +2,7 @@ import http from './http.js'
 
 export default {
   post(url, data, config) {
-    console.log(config)
-    return http.post(url, data, config)
+    return http.post(`${process.env.VUE_APP_BASE_API}${url}`, data, config)
   },
 
   get(url, params, config) {
@@ -15,11 +14,11 @@ export default {
     }
     if (config) Object.assign(getConfig, config)
 
-    return http.get(url, getConfig)
+    return http.get(`${process.env.VUE_APP_BASE_API}${url}`, getConfig)
   },
 
   put(url, data, config) {
-    return http.put(url, data, config)
+    return http.put(`${process.env.VUE_APP_BASE_API}${url}`, data, config)
   },
 
   delete(url, params, config) {
@@ -31,6 +30,6 @@ export default {
     }
     if (config) Object.assign(delConfig, config)
 
-    return http.delete(url, delConfig)
+    return http.delete(`${process.env.VUE_APP_BASE_API}${url}`, delConfig)
   }
 }

@@ -23,7 +23,7 @@
         <el-col :span="20">
           <div class="rancher-upload-content grid-content bg-purple">
             <el-upload
-            action="/upload/logo"
+            :action="uploadLogoImageUrl"
             list-type="picture-card"
             :show-file-list="showFileList"
             :on-success="handleSuccess"
@@ -43,7 +43,7 @@
         <el-col :span="20">
           <div class="rancher-upload-content grid-content bg-purple">
             <el-upload
-            action="/upload/loginBackground"
+            :action="uploadBackgroundImageUrl"
             list-type="picture-card"
             :show-file-list="showFileList"
             :on-success="handleLoginBackGroundSuccess"
@@ -237,6 +237,28 @@
             <div style="margin-top: 10px; padding: 10px;">{{rancherInstallState}}</div>
           </div>
         </el-card>
+        <el-card class="box-card" style="margin-top: 20px" shadow="never">
+          <div slot="header" class="clearfix">
+            <span>Rancher-ui 调试</span>
+          </div>
+          <div style="background: rgba(248, 248, 248, 1); padding: 10px 0px">
+            请提Rancher-server地址
+            <div style="margin-top: 10px; padding: 10px;">
+              <el-input v-model="rancherServer" @input="rancherServerChange" placeholder="请输入内容"></el-input>
+            </div>
+
+            <div style="margin-top: 10px; padding: 10px;">
+              <el-switch
+                style="display: block"
+                v-model="debugging"
+                @change="dubuggerChange"
+                active-color="#13ce66"
+                active-text="启动调试"
+                inactive-text="停止调试">
+              </el-switch>
+            </div>
+          </div>
+        </el-card>
       </ul>
     </div>
   </div>
@@ -257,14 +279,23 @@ export default {
       wsInstall: '',
       rancherInstallState: '',
 
+      uploadLogoImageUrl: `${process.env.VUE_APP_BASE_API}/upload/logo`,
+      uploadBackgroundImageUrl: `${process.env.VUE_APP_BASE_API}/upload/loginBackground`,
+
       modalNotify: '',
       host: '',
+      linkws: '',
+
+      startTimer: '',
 
       showFileList: false,
       dialogImageUrl: '',
       dialogVisible: false,
       imageUrl: '',
       fileName: '',
+      debugging: false,
+
+      rancherServer: '',
       //login background
       loginBackGroundImageUrl: '',
       loginBackGroundFileName: '',
@@ -315,7 +346,11 @@ export default {
         lightGrey: '#ecf0f1',
         midGrey: '#8B959C',
         darkGrey: '#3d3d3d',
-      }
+      },
+
+      debuggerWs: '',
+      debuggerTimer: '',
+      dubuggerClose: false,
     };
   },
   props: {
@@ -323,15 +358,23 @@ export default {
   },
   created () {
     let loc = window.location
+    if (this.getCookie('rancherServer')) {
+      this.rancherServer = this.getCookie('rancherServer');
+    }
 
     this.host = loc.host;
     Http.post('/upload/variableLastConfig').then((response) => {
       if (response.data) {
         this.dynamicValidateForm.domains = JSON.parse(response.data.link_data)
         this.fileName = response.data.file_name
-        this.imageUrl = `http://${this.host}/upload/public/static/uploadfile/${response.data.file_name}`
+        if (process.env.VUE_APP_BASE_API) {
+          this.imageUrl = `http://127.0.0.1:9091/upload/public/static/uploadfile/${response.data.file_name}`
+          this.loginBackGroundImageUrl = `http://127.0.0.1:9091/upload/public/static/uploadfile/${response.data.loginbg_file_name}`
+        } else {
+          this.imageUrl = `http://${this.host}/upload/public/static/uploadfile/${response.data.file_name}`
+          this.loginBackGroundImageUrl = `http://${this.host}/upload/public/static/uploadfile/${response.data.loginbg_file_name}`
+        }
         this.loginBackGroundFileName = response.data.loginbg_file_name
-        this.loginBackGroundImageUrl = `http://${this.host}/upload/public/static/uploadfile/${response.data.loginbg_file_name}`
 
         if (response.data.variables_data) {
           let variablesData = JSON.parse(response.data.variables_data)
@@ -369,6 +412,20 @@ export default {
       title: 'rancher-ui静态文件没有上传',
       duration: 0
     });
+
+    this.debuggerWs = new WebSocket(`ws://${loc.host}${process.env.VUE_APP_BASE_WS}/upload/startDebugger`)
+
+    this.debuggerWs.onopen = () => {  
+      this.debuggerTimer = setInterval(() => {
+        this.debuggerWs.send("heartbeat")
+      }, 3000)
+    }
+
+    // 接收到消息时触发  
+    this.debuggerWs.onclose = () => {
+      this.dubuggerClose = true;
+      this.reconnect();
+    }
   },
   methods: {
     handlePictureCardPreview() {
@@ -378,7 +435,11 @@ export default {
     handleSuccess(response) {
       if (response.message === 'OK') {
         this.fileName = response.data.file_name
-        this.imageUrl = `http://${this.host}/upload/public/static/uploadfile/${response.data.file_name}`
+        if (process.env.VUE_APP_BASE_API) {
+          this.imageUrl = `http://127.0.0.1:9091/upload/public/static/uploadfile/${response.data.file_name}`
+        } else {
+          this.imageUrl = `http://${this.host}/upload/public/static/uploadfile/${response.data.file_name}`
+        }
       }
     },
 
@@ -390,7 +451,11 @@ export default {
     handleLoginBackGroundSuccess(response) {
       if (response.message === 'OK') {
         this.loginBackGroundFileName = response.data.loginbg_file_name
-        this.loginBackGroundImageUrl = `http://${this.host}/upload/public/static/uploadfile/${response.data.loginbg_file_name}`
+        if (process.env.VUE_APP_BASE_API) {
+          this.loginBackGroundImageUrl = `http://127.0.0.1:9091/upload/public/static/uploadfile/${response.data.loginbg_file_name}`
+        } else {
+          this.loginBackGroundImageUrl = `http://${this.host}/upload/public/static/uploadfile/${response.data.loginbg_file_name}`
+        }
       }
     },
 
@@ -405,18 +470,17 @@ export default {
 
       let loc = window.location
 
-      this.ws = new WebSocket(`ws://${loc.host}/upload/test`)
+      this.ws = new WebSocket(`ws://${loc.host}${process.env.VUE_APP_BASE_WS}/upload/test`)
       this.buildDisabled = true
       // 连接打开时触发
       this.ws.onopen = () => {  
         this.ws.send("build");
-        console.log("Connection open ...") 
+        console.log("Connection open ...")
       }
       // 接收到消息时触发  
       this.ws.onmessage = (evt) => { 
         if (evt.data) {
-          this.loginfo = evt.data
-          if (this.loginfo === 'Failed build' || this.loginfo === 'Done build') {
+          if (evt.data === 'Failed build' || evt.data === 'Done build') {
             this.wsInstall.onclose = () => {
               console.log('Connection close !!!')
             }
@@ -424,7 +488,25 @@ export default {
             this.buildDisabled = false
           }
         }
-      } 
+      }
+      this.ws.onclose = (evt) => {
+        console.log(evt)
+        this.linkws = "链接关闭"
+      }
+
+      this.startTimer = setInterval(() => {
+        Http.get('/upload/isDone').then((response) => {
+          if (response.data.message === 'done') {
+            this.loginfo = 'Done build'
+            this.buildDisabled = false
+            if (this.startTimer) {
+              clearInterval(this.startTimer)
+            }
+          } else {
+            this.loginfo = 'Building 详情请看docker logs ${ContainerId}'
+          }
+        })
+      }, 10000);
     },
     resetForm() {
       this.dynamicValidateForm.domains.forEach((ele) => {
@@ -510,7 +592,7 @@ export default {
         this.wsInstall = "";
 
         let loc = window.location
-        this.wsInstall = new WebSocket(`ws://${loc.host}/upload/NpmInstall`)
+        this.wsInstall = new WebSocket(`ws://${loc.host}${process.env.VUE_APP_BASE_WS}/upload/NpmInstall`)
         this.wsInstall.onopen = () => {  
           if (this.rancherUiState === "企业版ui静态文件已上传") {
             this.wsInstall.send("installfile");
@@ -525,6 +607,56 @@ export default {
         }
       }
     },
+
+    initDebuggerStart() {
+
+    },
+    //启动调试
+    dubuggerChange(val) {
+      console.log(val)
+      if (val === true) {
+        this.debuggerWs.send(this.rancherServer)
+      } else {
+        this.debuggerWs.send("stop")
+        if (this.debuggerTimer) {
+          clearInterval(this.debuggerTimer)
+        }
+        this.debuggerWs.close()
+      }
+    },
+
+    rancherServerChange(val) {
+      document.cookie=`rancherServer=${val}`;
+    },
+
+    reconnect() {
+      let loc = window.location
+
+      setTimeout(() => {     //没连接上会一直重连，设置延迟避免请求过多
+        this.debuggerWs = new WebSocket(`ws://${loc.host}${process.env.VUE_APP_BASE_WS}/upload/startDebugger`)
+        this.debuggerWs.onclose = () => {
+          this.reconnect()
+        };
+        this.debuggerWs.onerror = () => {
+          this.reconnect()
+        };
+
+        this.debuggerWs.onopen = () => {  
+          this.debuggerTimer = setInterval(() => {
+            this.debuggerWs.send("heartbeat")
+          }, 3000)
+        }
+      }, 1000);
+    },
+
+    getCookie(name) {
+      var arr,reg = new RegExp("(^| )"+name+"=([^;]*)(;|$)");
+      // eslint-disable-next-line no-cond-assign
+      if( arr = document.cookie.match(reg))
+       return unescape(arr[2]);
+      else
+       return null;
+    }
   },
   watch: {
     rancherUiState(val) {
@@ -534,7 +666,7 @@ export default {
         }
         let loc = window.location
 
-        this.wsInstall = new WebSocket(`ws://${loc.host}/upload/NpmInstall`)
+        this.wsInstall = new WebSocket(`ws://${loc.host}${process.env.VUE_APP_BASE_WS}/upload/NpmInstall`)
         // 连接打开时触发
         this.wsInstall.onopen = () => {
           if (val === "企业版ui静态文件已上传") {
@@ -561,7 +693,15 @@ export default {
     }
   },
   beforeDestroy() {
-    clearInterval(this.timer);
+    if (this.timer) {
+      clearInterval(this.timer);
+    }
+    if (this.startTimer) {
+      clearInterval(this.startTimer)
+    }
+    if (this.debuggerTimer) {
+      clearInterval(this.debuggerTimer)
+    }
   }
 }
 </script>
