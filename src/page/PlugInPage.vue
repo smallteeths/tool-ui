@@ -374,7 +374,7 @@ export default {
       iconImageUrl: '',
       fileName: '',
       debugging: false,
-      toggleLink: '1',
+      toggleLink: '2',
       version: '2.3.6',
 
       rancherServer: '',
@@ -742,21 +742,23 @@ export default {
     reconnect() {
       let loc = window.location
 
-      setTimeout(() => {     //没连接上会一直重连，设置延迟避免请求过多
-        this.debuggerWs = new WebSocket(`ws://${loc.host}${process.env.VUE_APP_BASE_WS}/upload/startDebugger`)
-        this.debuggerWs.onclose = () => {
-          this.reconnect()
-        };
-        this.debuggerWs.onerror = () => {
-          this.reconnect()
-        };
+      if (this.debugging) {
+        setTimeout(() => {     //没连接上会一直重连，设置延迟避免请求过多
+          this.debuggerWs = new WebSocket(`ws://${loc.host}${process.env.VUE_APP_BASE_WS}/upload/startDebugger`)
+          this.debuggerWs.onclose = () => {
+            this.reconnect()
+          };
+          this.debuggerWs.onerror = () => {
+            this.reconnect()
+          };
 
-        this.debuggerWs.onopen = () => {  
-          this.debuggerTimer = setInterval(() => {
-            this.debuggerWs.send("heartbeat")
-          }, 8000)
-        }
-      }, 1000);
+          this.debuggerWs.onopen = () => {  
+            this.debuggerTimer = setInterval(() => {
+              this.debuggerWs.send("heartbeat")
+            }, 8000)
+          }
+        }, 1000);
+      }
     },
 
     getCookie(name) {
