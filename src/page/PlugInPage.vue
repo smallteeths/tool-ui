@@ -18,6 +18,42 @@
       </el-row>
       <el-row type="flex" :gutter="20">
         <el-col :span="4">
+          <div class="rancher-upload-label grid-content bg-purple"><div style="padding-top: 10px">VERSION</div></div>
+        </el-col>
+        <el-col :span="20">
+          <div class="rancher-from-content grid-content bg-purple">
+            <el-form :label-position="labelPosition" :style="{'width':'100%', 'padding-bottom': '20px', 'text-align': 'left'}" label-width="120px">
+              <el-radio-group v-model="version">
+                <el-radio :label="'2.3.6'" >v-2.3.6</el-radio>
+                <el-radio :label="'2.3.8'" >v-2.3.8</el-radio>
+                <el-radio :label="'2.3.9'" >v-2.3.9</el-radio>
+              </el-radio-group>
+            </el-form>
+          </div>
+        </el-col>
+      </el-row>
+      <el-row type="flex" :gutter="20">
+        <el-col :span="4">
+          <div class="rancher-upload-label grid-content bg-purple"><div style="padding-top: 30px">ICON</div></div>
+        </el-col>
+        <el-col :span="20">
+          <div class="rancher-upload-content grid-content bg-purple">
+            <el-upload
+            :action="uploadIconImageUrl"
+            list-type="picture-card"
+            :show-file-list="showFileList"
+            :on-success="handleIconImageSuccess"
+            >
+              <i class="el-icon-plus"></i>
+            </el-upload>
+            <div class="rancher-upload-img" @click="handlePictureCardPreview">
+              <img :src="iconImageUrl" alt="">
+            </div>
+          </div>
+        </el-col>
+      </el-row>
+      <el-row type="flex" :gutter="20">
+        <el-col :span="4">
           <div class="rancher-upload-label grid-content bg-purple"><div style="padding-top: 30px">LOGO</div></div>
         </el-col>
         <el-col :span="20">
@@ -53,6 +89,38 @@
             <div class="rancher-upload-img" @click="handleLoginBackGroundPictureCardPreview">
               <img :src="loginBackGroundImageUrl" alt="">
             </div>
+          </div>
+        </el-col>
+      </el-row>
+      <el-row type="flex" :gutter="20">
+        <el-col :span="4">
+          <div class="rancher-upload-label grid-content bg-purple"><div style="padding-top: 20px">Title</div></div>
+        </el-col>
+        <el-col :span="20">
+          <div class="rancher-from-content grid-content bg-purple">
+            <el-form :label-position="labelPosition" :style="{ 'width':'100%' }" label-width="120px">
+              <el-form-item label="页面Titile">
+                <div :style="{'display': 'flex', 'align-items': 'left'}">
+                  <el-input :style="{'width': '30%'}" v-model="titleForm.name" placeholder="Rancher"></el-input>
+                </div>
+              </el-form-item>
+            </el-form>
+          </div>
+        </el-col>
+      </el-row>
+      <el-row type="flex" :gutter="20">
+        <el-col :span="4">
+          <div class="rancher-upload-label grid-content bg-purple"><div style="padding-top: 20px">登录Title</div></div>
+        </el-col>
+        <el-col :span="20">
+          <div class="rancher-from-content grid-content bg-purple">
+            <el-form :label-position="labelPosition" :style="{'width':'100%'}" label-width="120px">
+              <el-form-item label="欢迎登录">
+                <div :style="{'display': 'flex', 'align-items': 'left'}">
+                  <el-input :style="{'width': '30%', 'margin-right': '20px'}" v-model="formLogin.greeting" placeholder="欢迎使用Rancher"></el-input>
+                </div>
+              </el-form-item>
+            </el-form>
           </div>
         </el-col>
       </el-row>
@@ -192,6 +260,15 @@
               </el-form-item>
               <el-form-item>
                 <div class="rancher-form-link-action">
+                  <el-tooltip class="item" effect="dark" content="覆盖会添加自己的底部链接并把 Rancher 底部链接和右侧切换国际化全部删除" placement="top-start">
+                    <el-radio v-model="toggleLink" label="1">覆盖Rancher 底部链接</el-radio>
+                  </el-tooltip>
+                  <el-tooltip class="item" effect="dark" content="添加自己的底部链接保留 Rancher 底部链接和右侧切换国际化" placement="top-start">
+                    <el-radio v-model="toggleLink" label="2">新增Rancher 底部链接</el-radio>
+                  </el-tooltip>
+                  <el-tooltip class="item" effect="dark" content="完全删除 Rancher 底部链接已经右侧切换国际化select" placement="top-start">
+                    <el-radio v-model="toggleLink" label="3">删除Rancher 底部链接</el-radio>
+                  </el-tooltip>
                   <el-button @click="addDomain">新增链接</el-button>
                   <el-button @click="resetForm()">重置</el-button>
                 </div>
@@ -251,6 +328,7 @@
               <el-switch
                 style="display: block"
                 v-model="debugging"
+                :disabled="debuggerDisabled"
                 @change="dubuggerChange"
                 active-color="#13ce66"
                 active-text="启动调试"
@@ -280,6 +358,7 @@ export default {
       rancherInstallState: '',
 
       uploadLogoImageUrl: `${process.env.VUE_APP_BASE_API}/upload/logo`,
+      uploadIconImageUrl: `${process.env.VUE_APP_BASE_API}/upload/icon`,
       uploadBackgroundImageUrl: `${process.env.VUE_APP_BASE_API}/upload/loginBackground`,
 
       modalNotify: '',
@@ -292,13 +371,17 @@ export default {
       dialogImageUrl: '',
       dialogVisible: false,
       imageUrl: '',
+      iconImageUrl: '',
       fileName: '',
       debugging: false,
+      toggleLink: '1',
+      version: '2.3.6',
 
       rancherServer: '',
       //login background
       loginBackGroundImageUrl: '',
       loginBackGroundFileName: '',
+      iconImageName: '',
       loginBackGroundDialogImageUrl: '',
       loginBackGroundDialogVisible: false,
       //footer link
@@ -314,6 +397,11 @@ export default {
       formLogin: {
         name: '',
         value: '',
+        greeting: '',
+      },
+
+      titleForm: {
+        name: ''
       },
 
       //theme color
@@ -351,6 +439,7 @@ export default {
       debuggerWs: '',
       debuggerTimer: '',
       dubuggerClose: false,
+      debuggerDisabled: true,
     };
   },
   props: {
@@ -365,16 +454,23 @@ export default {
     this.host = loc.host;
     Http.post('/upload/variableLastConfig').then((response) => {
       if (response.data) {
-        this.dynamicValidateForm.domains = JSON.parse(response.data.link_data)
+        if (response.data.link_data) {
+          this.dynamicValidateForm.domains = JSON.parse(response.data.link_data)
+        }
         this.fileName = response.data.file_name
         if (process.env.VUE_APP_BASE_API) {
           this.imageUrl = `http://127.0.0.1:9091/upload/public/static/uploadfile/${response.data.file_name}`
           this.loginBackGroundImageUrl = `http://127.0.0.1:9091/upload/public/static/uploadfile/${response.data.loginbg_file_name}`
+          this.iconImageUrl = `http://127.0.0.1:9091/upload/public/static/uploadfile/${response.data.icon_file_name}`
         } else {
           this.imageUrl = `http://${this.host}/upload/public/static/uploadfile/${response.data.file_name}`
           this.loginBackGroundImageUrl = `http://${this.host}/upload/public/static/uploadfile/${response.data.loginbg_file_name}`
+          this.iconImageUrl = `http://${this.host}/upload/public/static/uploadfile/${response.data.icon_file_name}`
         }
         this.loginBackGroundFileName = response.data.loginbg_file_name
+        this.iconImageName = response.data.icon_file_name
+        this.titleForm.name = response.data.title
+        this.version = response.data.tag ? response.data.tag : '2.3.6'
 
         if (response.data.variables_data) {
           let variablesData = JSON.parse(response.data.variables_data)
@@ -418,7 +514,7 @@ export default {
     this.debuggerWs.onopen = () => {  
       this.debuggerTimer = setInterval(() => {
         this.debuggerWs.send("heartbeat")
-      }, 3000)
+      }, 8000)
     }
 
     // 接收到消息时触发  
@@ -439,6 +535,16 @@ export default {
           this.imageUrl = `http://127.0.0.1:9091/upload/public/static/uploadfile/${response.data.file_name}`
         } else {
           this.imageUrl = `http://${this.host}/upload/public/static/uploadfile/${response.data.file_name}`
+        }
+      }
+    },
+    handleIconImageSuccess(response) {
+      if (response.message === 'OK') {
+        this.iconImageName = response.data.icon_file_name
+        if (process.env.VUE_APP_BASE_API) {
+          this.iconImageUrl = `http://127.0.0.1:9091/upload/public/static/uploadfile/${response.data.icon_file_name}`
+        } else {
+          this.iconImageUrl = `http://${this.host}/upload/public/static/uploadfile/${response.data.icon_file_name}`
         }
       }
     },
@@ -547,9 +653,13 @@ export default {
       Http.post('/upload/save', {
         file_name: this.fileName,
         loginbg_file_name: this.loginBackGroundFileName,
-        link_data: list.length > 0 && list[0].name && list[0].value ? JSON.stringify(list) : '',
-        loginrecord_data: this.formLogin.name && this.formLogin.value ?  JSON.stringify(this.formLogin) : '',
-        variables_data: JSON.stringify(variablesData)
+        icon_file_name: this.iconImageName,
+        link_data: list.length > 0 && list[0].name && list[0].value && this.toggleLink !== '3' ? JSON.stringify(list) : '',
+        loginrecord_data: (this.formLogin.name && this.formLogin.value) || this.formLogin.greeting ?  JSON.stringify(this.formLogin) : '',
+        variables_data: JSON.stringify(variablesData),
+        title: this.titleForm.name,
+        toggleLink: this.toggleLink,
+        tag: this.version,
       }).then((response) => {
         if (response.message === 'OK') {
           this.$message({
@@ -567,9 +677,9 @@ export default {
 
     download() {
       if (this.rancherUiState === "企业版ui静态文件已上传") {
-        window.open(`http://${this.host}/upload/public/rancherui/pandaria-ui/dist/static/2.3-dev.tar.gz`);
+        window.open(`http://${this.host}/upload/public/rancherui/pandaria-ui/dist/static`);
       } else {
-        window.open(`http://${this.host}/upload/public/rancherui/ui/dist/static/master-dev.tar.gz`);
+        window.open(`http://${this.host}/upload/public/rancherui/ui/dist/static`);
       }
       
     },
@@ -644,7 +754,7 @@ export default {
         this.debuggerWs.onopen = () => {  
           this.debuggerTimer = setInterval(() => {
             this.debuggerWs.send("heartbeat")
-          }, 3000)
+          }, 8000)
         }
       }, 1000);
     },
@@ -689,6 +799,15 @@ export default {
           title: 'rancher-ui静态文件没有上传',
           duration: 0
         });
+      }
+    },
+    rancherInstallState(val) {
+      if (val === 'Done install') {
+        setTimeout(()=> {
+          this.debuggerDisabled = false;
+        }, 2000)
+      } else {
+        this.debuggerDisabled = true;
       }
     }
   },
@@ -782,6 +901,7 @@ export default {
   .rancher-form-link-action {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
   }
   .rancher-form-layout .el-input{
     margin-right: 20px;
