@@ -27,6 +27,7 @@
                 <el-radio :label="'2.3.6'" >v-2.3.6</el-radio>
                 <el-radio :label="'2.3.8'" >v-2.3.8</el-radio>
                 <el-radio :label="'2.3.9'" >v-2.3.9</el-radio>
+                <el-radio :label="'2.4.8'" >v-2.4.8</el-radio>
               </el-radio-group>
             </el-form>
           </div>
@@ -46,7 +47,7 @@
             >
               <i class="el-icon-plus"></i>
             </el-upload>
-            <div class="rancher-upload-img" @click="handlePictureCardPreview">
+            <div class="rancher-upload-img" @click="handlePictureCardPreview(iconImageUrl)">
               <img :src="iconImageUrl" alt="">
             </div>
           </div>
@@ -54,7 +55,7 @@
       </el-row>
       <el-row type="flex" :gutter="20">
         <el-col :span="4">
-          <div class="rancher-upload-label grid-content bg-purple"><div style="padding-top: 30px">LOGO</div></div>
+          <div class="rancher-upload-label grid-content bg-purple"><div style="padding-top: 30px">横版LOGO</div></div>
         </el-col>
         <el-col :span="20">
           <div class="rancher-upload-content grid-content bg-purple">
@@ -66,8 +67,28 @@
             >
               <i class="el-icon-plus"></i>
             </el-upload>
-            <div class="rancher-upload-img" @click="handlePictureCardPreview">
+            <div class="rancher-upload-img" @click="handlePictureCardPreview(imageUrl)">
               <img :src="imageUrl" alt="">
+            </div>
+          </div>
+        </el-col>
+      </el-row>
+      <el-row type="flex" :gutter="20">
+        <el-col :span="4">
+          <div class="rancher-upload-label grid-content bg-purple"><div style="padding-top: 30px">竖版LOGO</div></div>
+        </el-col>
+        <el-col :span="20">
+          <div class="rancher-upload-content grid-content bg-purple">
+            <el-upload
+            :action="uploadLogoPandariaImageUrl"
+            list-type="picture-card"
+            :show-file-list="showFileList"
+            :on-success="handlePandariaLogoSuccess"
+            >
+              <i class="el-icon-plus"></i>
+            </el-upload>
+            <div class="rancher-upload-img" @click="handlePictureCardPreview(logoPandariaImageUrl)">
+              <img :src="logoPandariaImageUrl" alt="">
             </div>
           </div>
         </el-col>
@@ -358,6 +379,7 @@ export default {
       rancherInstallState: '',
 
       uploadLogoImageUrl: `${process.env.VUE_APP_BASE_API}/upload/logo`,
+      uploadLogoPandariaImageUrl: `${process.env.VUE_APP_BASE_API}/upload/logoPandaria`,
       uploadIconImageUrl: `${process.env.VUE_APP_BASE_API}/upload/icon`,
       uploadBackgroundImageUrl: `${process.env.VUE_APP_BASE_API}/upload/loginBackground`,
 
@@ -371,6 +393,7 @@ export default {
       dialogImageUrl: '',
       dialogVisible: false,
       imageUrl: '',
+      logoPandariaImageUrl: '',
       iconImageUrl: '',
       fileName: '',
       debugging: false,
@@ -381,6 +404,7 @@ export default {
       //login background
       loginBackGroundImageUrl: '',
       loginBackGroundFileName: '',
+      filePandariaName: '',
       iconImageName: '',
       loginBackGroundDialogImageUrl: '',
       loginBackGroundDialogVisible: false,
@@ -458,12 +482,15 @@ export default {
           this.dynamicValidateForm.domains = JSON.parse(response.data.link_data)
         }
         this.fileName = response.data.file_name
+        this.filePandariaName = response.data.file_pandaria_name
         if (process.env.VUE_APP_BASE_API) {
           this.imageUrl = `http://127.0.0.1:9091/upload/public/static/uploadfile/${response.data.file_name}`
+          this.logoPandariaImageUrl = `http://127.0.0.1:9091/upload/public/static/uploadfile/${response.data.file_pandaria_name}`
           this.loginBackGroundImageUrl = `http://127.0.0.1:9091/upload/public/static/uploadfile/${response.data.loginbg_file_name}`
           this.iconImageUrl = `http://127.0.0.1:9091/upload/public/static/uploadfile/${response.data.icon_file_name}`
         } else {
           this.imageUrl = `http://${this.host}/upload/public/static/uploadfile/${response.data.file_name}`
+          this.logoPandariaImageUrl = `http://${this.host}/upload/public/static/uploadfile/${response.data.file_pandaria_name}`
           this.loginBackGroundImageUrl = `http://${this.host}/upload/public/static/uploadfile/${response.data.loginbg_file_name}`
           this.iconImageUrl = `http://${this.host}/upload/public/static/uploadfile/${response.data.icon_file_name}`
         }
@@ -524,7 +551,8 @@ export default {
     }
   },
   methods: {
-    handlePictureCardPreview() {
+    handlePictureCardPreview(url) {
+      console.log(url)
       this.dialogImageUrl = this.imageUrl;
       this.dialogVisible = true;
     },
@@ -535,6 +563,16 @@ export default {
           this.imageUrl = `http://127.0.0.1:9091/upload/public/static/uploadfile/${response.data.file_name}`
         } else {
           this.imageUrl = `http://${this.host}/upload/public/static/uploadfile/${response.data.file_name}`
+        }
+      }
+    },
+    handlePandariaLogoSuccess(response) {
+      if (response.message === 'OK') {
+        this.filePandariaName = response.data.file_pandaria_name
+        if (process.env.VUE_APP_BASE_API) {
+          this.logoPandariaImageUrl = `http://127.0.0.1:9091/upload/public/static/uploadfile/${response.data.file_pandaria_name}`
+        } else {
+          this.logoPandariaImageUrl = `http://${this.host}/upload/public/static/uploadfile/${response.data.file_pandaria_name}`
         }
       }
     },
@@ -652,6 +690,7 @@ export default {
 
       Http.post('/upload/save', {
         file_name: this.fileName,
+        file_pandaria_name: this.filePandariaName,
         loginbg_file_name: this.loginBackGroundFileName,
         icon_file_name: this.iconImageName,
         link_data: list.length > 0 && list[0].name && list[0].value && this.toggleLink !== '3' ? JSON.stringify(list) : '',
