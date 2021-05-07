@@ -29,6 +29,7 @@
                 <el-radio :label="'2.3.9'" >v-2.3.9</el-radio>
                 <el-radio :label="'2.4.8'" >v-2.4.8</el-radio>
                 <el-radio :label="'2.4.13'" >v-(2.4.13 ~ 15)</el-radio>
+                <el-radio :label="'2.5.7'" >v-2.5.7</el-radio>
               </el-radio-group>
             </el-form>
           </div>
